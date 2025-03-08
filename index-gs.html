@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utca és ember párosítás ...........</title>
+    
+    <!-- OpenStreetMap + Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Stílus -->
+    <style>
+        #container {
+            display: flex;
+            justify-content: space-between;
+        }
+        #tabla {
+            width: 45%;
+        }
+        #terkep {
+            width: 50%;
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Utca és Ember párosítás</h2>
+
+    <div id="container">
+        <table id="tabla" border="1">
+            <thead>
+                <tr>
+                    <th>Utca</th>
+                    <th>Hozzárendelt személy</th>
+                </tr>
+            </thead>
+            <tbody id="utcaTabla"></tbody>
+        </table>
+
+        <div id="terkep"></div>
+    </div>
+
+    <br>
+    <button onclick="mentesGoogleSheetbe()">Mentés Google Sheet-be</button>
+
+    <!-- OpenStreetMap + Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <!-- Google Sheets API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script>
+        const SHEET_ID = "12OgjFi7yz_4J3tfWLGkBy6s4zvachBJgfbIc7JyaTOU"; // Google Sheet azonosítója
+        const API_KEY = "AIzaSyD3hwC8jl869uWKhjLhTsd6KyRVk4XLpxM";  // Google API kulcs 
+        let emberek = [];
+        let utcak = [];
+        let terkep;
+        let activeLayer = null; // Az aktuálisan kijelölt utca
+
+        function initMap() {
+            terkep = L.map('terkep').setView([47.614, 19.024], 14); // Üröm középpont
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(terkep);
+        }
+
+        // Google Sheets adatlekérés
+        function loadData() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
+            }).then(() => {
+                return gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SHEET_ID,
+                    range: "Emberek!A:A"
+                });
+            }).then(response => {
+                emberek = response.result.values.flat();
+                return gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SHEET_ID,
+                    range: "Utcak!A:A"
+                });
+            }).then(response => {
+                utcak = response.result.values.flat();
+                populateTable();
+            }).catch(error => console.error("Hiba:", error));
+        }
+
+        function populateTable() {
+            let tabla = document.getElementById("utcaTabla");
+            utcak.forEach(utca => {
+                let sor = tabla.insertRow();
+                let cellaUtca = sor.insertCell(0);
+                let cellaSzemely = sor.insertCell(1);
+
+                cellaUtca.textContent = utca;
+                cellaUtca.onclick = () => jelolUtca(utca);
+
+                let select = document.createElement("select");
+                emberek.forEach(ember => {
+                    let option = document.createElement("option");
+                    option.value = ember;
+                    option.textContent = ember;
+                    select.appendChild(option);
+                });
+                cellaSzemely.appendChild(select);
+            });
+        }
+
+        function jelolUtca(utcaNev) {
+            if (activeLayer) terkep.removeLayer(activeLayer);
+
+            fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&country=Hungary&format=json&polygon_geojson=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        let coordinates = data[0].geojson.coordinates;
+                        let polyline = L.polyline(coordinates, { color: 'blue', weight: 5 }).addTo(terkep);
+                        activeLayer = polyline;
+                        terkep.fitBounds(polyline.getBounds());
+                    } else {
+                        alert("Nem található ilyen utca: " + utcaNev);
+                    }
+                });
+	     
+        }
+
+        function mentesGoogleSheetbe() {
+            let adatok = [["Utca", "Személy"]];
+            let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+
+            for (let i = 0; i < sorok.length; i++) {
+                let utcaNev = sorok[i].cells[0].textContent;
+                let szemely = sorok[i].cells[1].querySelector("select").value;
+                adatok.push([utcaNev, szemely]);
+            }
+
+            gapi.client.sheets.spreadsheets.values.update({
+                spreadsheetId: SHEET_ID,
+                range: "Parositas!A:B",
+                valueInputOption: "RAW",
+                resource: { values: adatok }
+            }).then(response => {
+                alert("Mentés sikeres!");
+            }).catch(error => console.error("Hiba a mentéskor:", error));
+        }
+
+        function handleClientLoad() {
+            gapi.load("client", loadData);
+        }
+
+	window.onload = function () {
+	    initMap();
+	    handleClientLoad();
+	};
+    </script>
+
+</body>
+</html>
