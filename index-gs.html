@@ -114,17 +114,26 @@
             fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.length > 0) {
-                        let coordinates = data[0].geojson.coordinates;
-                        let polyline = L.polyline(coordinates, { color: 'blue', weight: 5 }).addTo(terkep);
-                        activeLayer = polyline;
-                        terkep.fitBounds(polyline.getBounds());
-                    } else {
-                        alert("Nem található ilyen utca: " + utcaNev);
-                    }
-                });
-	     
+                    //if (data.length > 0) {
+                    //    let coordinates = data[0].geojson.coordinates;
+                    //    let polyline = L.polyline(coordinates, { color: 'blue', weight: 5 }).addTo(terkep);
+                    //    activeLayer = polyline;
+                    //    terkep.fitBounds(polyline.getBounds());
+                    //} else {
+                    //    alert("Nem található ilyen utca: " + utcaNev);
+                    //}
+			                
+	 	    if (data.length > 0 && data[0].geojson) {
+    			let geoJsonLayer = L.geoJSON(data[0].geojson, { style: { color: 'blue', weight: 5 } }).addTo(terkep);
+    			activeLayer = geoJsonLayer;
+    			terkep.fitBounds(geoJsonLayer.getBounds());
+		    } else {
+    			alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+		    }   
+		});	
         }
+	    
+
 
         function mentesGoogleSheetbe() {
             let adatok = [["Utca", "Személy"]];
