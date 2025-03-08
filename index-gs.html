@@ -124,9 +124,11 @@
                     //}
 			                
 	 	    if (data.length > 0 && data[0].geojson) {
-    			let geoJsonLayer = L.geoJSON(data[0].geojson, { style: { color: 'blue', weight: 5 } }).addTo(terkep);
-    			activeLayer = geoJsonLayer;
-    			terkep.fitBounds(geoJsonLayer.getBounds());
+			for (let i = 0; i < data.length; i++) {
+    				let geoJsonLayer = L.geoJSON(data[i].geojson, { style: { color: 'blue', weight: 5 } }).addTo(terkep);
+    				activeLayer = geoJsonLayer;
+    				terkep.fitBounds(geoJsonLayer.getBounds());
+			}	
 		    } else {
     			alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
 		    }   
