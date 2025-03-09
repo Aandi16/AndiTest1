@@ -108,6 +108,7 @@
             });
         }        
 
+	    
     	function jelolUtca(utcaNev) {
 	    // Eltávolítjuk a régi utcát, ha van
 	    if (activeLayer) {
@@ -134,10 +135,8 @@
 	                }
 	
 	                // Rajzoljuk ki az utcát
-	                //activeLayer = L.polyline(allCoordinates, { color: 'blue', weight: 5 }).addTo(terkep);
-			for (let i = 0; i < allCoordinates.length; i++) {    
-				activeLayer = L.geoJSON(allCoordinates[i], {  style: { color: 'blue', weight: 5 } } ).addTo(terkep);    
-			}
+	                activeLayer = L.polyline(allCoordinates, { color: 'blue', weight: 5 }).addTo(terkep);
+			
 	                // A térképet a kijelölt utca körüli területre fókuszáljuk
 	                terkep.fitBounds(activeLayer.getBounds());
 	            } else {
