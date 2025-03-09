@@ -111,7 +111,7 @@
                 let cellaSzemely = sor.insertCell(1);
 
                 cellaUtca.textContent = utca;
-                cellaUtca.onclick = () => jelolUtca2(utca);
+                cellaUtca.onclick = () => jelolUtca3(utca);
 
                 let select = document.createElement("select");
                 emberek.forEach(ember => {
@@ -207,6 +207,49 @@
             alert("Hiba történt az utca adatainak lekérése közben!");
         });
 	}
+
+    function jelolUtca3(utcaNev) {
+    // Eltávolítjuk a régi utcát, ha van
+    if (activeLayer) {
+        terkep.removeLayer(activeLayer);
+    }
+
+    // Megkeressük az aktív sort és kiemeljük
+    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+    for (let sor of sorok) {
+        if (sor.cells[0].textContent === utcaNev) {
+            sor.classList.add("kijelolt-sor");
+        } else {
+            sor.classList.remove("kijelolt-sor");
+        }
+    }
+
+    // Lekérjük az új utca koordinátákat az OpenStreetMap-ből
+    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0 && data[0].geojson) {
+                activeLayer = L.geoJSON(data[0].geojson, {
+                    style: { color: 'blue', weight: 5 }
+                }).addTo(terkep);
+
+                // Ha az objektumnak van getBounds metódusa, akkor zoomolunk rá
+                if (activeLayer.getBounds && typeof activeLayer.getBounds === "function") {
+                    terkep.fitBounds(activeLayer.getBounds());
+                } else if (data[0].lat && data[0].lon) {
+                    // Ha csak egy pont adatunk van, akkor arra zoomolunk
+                    terkep.setView([data[0].lat, data[0].lon], 17);
+                }
+            } else {
+                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+            }
+        })
+        .catch(error => {
+            console.error("Hiba történt:", error);
+            alert("Hiba történt az utca adatainak lekérése közben! Részletek a konzolban.");
+        });
+    }
+    
     
         function mentesGoogleSheetbe() {
             let adatok = [["Utca", "Személy"]];
