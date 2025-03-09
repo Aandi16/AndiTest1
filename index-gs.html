@@ -111,7 +111,7 @@
                 let cellaSzemely = sor.insertCell(1);
 
                 cellaUtca.textContent = utca;
-                cellaUtca.onclick = () => jelolUtca(utca);
+                cellaUtca.onclick = () => jelolUtca2(utca);
 
                 let select = document.createElement("select");
                 emberek.forEach(ember => {
@@ -160,43 +160,52 @@
 	        });
 	}
 
-    function jelolUtca3(utcaNev) {
-	    // Eltávolítjuk a régi utcát, ha van
-	    if (activeLayer) {
-	        terkep.removeLayer(activeLayer);
-	    }
-	
-	    // Lekérjük az új utca koordinátákat az OpenStreetMap-ből
-	   fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
-	        .then(response => response.json())
-	        .then(data => {
-	            if (data.length > 0 && data[0].geojson) {
-	                // GeoJSON adat szétbontása és összefűzése, ha több szegmense van
-	                let allCoordinates = [];
-	
-	                // Ha az utca több polyline-ból áll
-	                if (Array.isArray(data[0].geojson.coordinates[0])) {
-	                    // Az összes szegmenst hozzáadjuk
-	                    data[0].geojson.coordinates.forEach(segment => {
-	                        allCoordinates = allCoordinates.concat(segment);
-	                    });
-	                } else {
-	                    // Ha egyetlen polyline van
-	                    allCoordinates = data[0].geojson.coordinates;
-	                }
-	
-	                // Rajzoljuk ki az utcát
-	                activeLayer = L.polyline(allCoordinates, { color: 'blue', weight: 5 }).addTo(terkep);
-	
-	                // A térképet a kijelölt utca körüli területre fókuszáljuk
-	                terkep.fitBounds(activeLayer.getBounds());
-	            } else {
-	                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
-	            }
-	        }).catch(error => {
-	            console.error("Hiba történt:", error);
-	            alert("Hiba történt az utca adatainak lekérése közben!");
-	        });
+    function jelolUtca2(utcaNev) {
+    // Eltávolítjuk a régi utcát, ha van
+    if (activeLayer) {
+        terkep.removeLayer(activeLayer);
+    }
+
+    // Megkeressük az aktív sort és kiemeljük
+    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+    for (let sor of sorok) {
+        if (sor.cells[0].textContent === utcaNev) {
+            sor.classList.add("kijelolt-sor");
+        } else {
+            sor.classList.remove("kijelolt-sor");
+        }
+    }
+
+    // Lekérjük az összes találatot az utcára
+    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let geoJsonFeatures = [];
+
+                // Végigmegyünk az összes találaton, hogy minden utcadarabot megkapjunk
+                data.forEach(utca => {
+                    if (utca.geojson) {
+                        geoJsonFeatures.push(L.geoJSON(utca.geojson, {
+                            style: { color: 'blue', weight: 5 }
+                        }));
+                    }
+                });
+
+                if (geoJsonFeatures.length > 0) {
+                    // Több rétegből álló csoportot hozunk létre
+                    activeLayer = L.layerGroup(geoJsonFeatures).addTo(terkep);
+                    terkep.fitBounds(activeLayer.getBounds());
+                } else {
+                    alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+                }
+            } else {
+                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+            }
+        }).catch(error => {
+            console.error("Hiba történt:", error);
+            alert("Hiba történt az utca adatainak lekérése közben!");
+        });
 	}
     
         function mentesGoogleSheetbe() {
