@@ -10,21 +10,37 @@
 
     <!-- Stílus -->
     <style>
-        #container {
-            display: flex;
-            justify-content: space-between;
-        }
-        #tabla {
-            width: 45%;
-        }
-        #terkep {
-            width: 50%;
-            height: 500px;
-        }
+    #container {
+	        display: flex;
+	        justify-content: space-between;
+	        gap: 20px;
+	    }
+	
+    #tabla {
+	        width: 45%;
+	        border-collapse: collapse;
+	    }
+	
+    #tabla th, #tabla td {
+	        border: 1px solid #ccc; /* Vékonyabb szegély */
+	        padding: 8px;
+	        text-align: left;
+	    }
+	
+    #terkep {
+	        width: 50%;
+	        height: 500px;
+	        border: 2px solid #ccc; /* Szebb keret */
+	    }
+	
+    /* Aktív sor kiemelése */
+    .kijelolt-sor {
+        background-color: #d0e8ff !important;
+    }
     </style>
 </head>
+	
 <body>
-
     <h2>Utca és Ember párosítás</h2>
 
     <div id="container">
@@ -95,7 +111,7 @@
                 let cellaSzemely = sor.insertCell(1);
 
                 cellaUtca.textContent = utca;
-                cellaUtca.onclick = () => jelolUtca2(utca);
+                cellaUtca.onclick = () => jelolUtca(utca);
 
                 let select = document.createElement("select");
                 emberek.forEach(ember => {
@@ -106,41 +122,24 @@
                 });
                 cellaSzemely.appendChild(select);
             });
-        }
-
-        function jelolUtca(utcaNev) {
-            if (activeLayer) terkep.removeLayer(activeLayer);
-
-            fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
-                .then(response => response.json())
-                .then(data => {
-                    //if (data.length > 0) {
-                    //    let coordinates = data[0].geojson.coordinates;
-                    //    let polyline = L.polyline(coordinates, { color: 'blue', weight: 5 }).addTo(terkep);
-                    //    activeLayer = polyline;
-                    //    terkep.fitBounds(polyline.getBounds());
-                    //} else {
-                    //    alert("Nem található ilyen utca: " + utcaNev);
-                    //}
-			                
-	 	    if (data.length > 0 && data[0].geojson) {
-			for (let i = 0; i < data.length; i++) {
-    				let geoJsonLayer = L.geoJSON(data[i].geojson, { style: { color: 'blue', weight: 5 } }).addTo(terkep);
-    				activeLayer = geoJsonLayer;
-    				terkep.fitBounds(geoJsonLayer.getBounds());
-			}	
-		    } else {
-    			alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
-		    }   
-		});	
-        }
+        }       
 	    
-	function jelolUtca2(utcaNev) {
+	function jelolUtca(utcaNev) {
 	   // Eltávolítjuk a régi utcát, ha van
 	    if (activeLayer) {
 	        terkep.removeLayer(activeLayer);
 	    }
-	
+
+	     // Megkeressük az aktív sort és kiemeljük
+	    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+	    for (let sor of sorok) {
+	        if (sor.cells[0].textContent === utcaNev) {
+	            sor.classList.add("kijelolt-sor");
+	        } else {
+	            sor.classList.remove("kijelolt-sor");
+	        }
+	    }
+		
 	    // Lekérjük az új utca koordinátákat az OpenStreetMap-ből
 	    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
 	        .then(response => response.json())
