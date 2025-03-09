@@ -250,26 +250,28 @@
         });
     }
     
-    
-        function mentesGoogleSheetbe() {
-            let adatok = [["Utca", "Személy"]];
-            let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+    function mentesGoogleSheetbe() {
+    		let adatok = [];
+    		let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
 
-            for (let i = 0; i < sorok.length; i++) {
-                let utcaNev = sorok[i].cells[0].textContent;
-                let szemely = sorok[i].cells[1].querySelector("select").value;
-                adatok.push([utcaNev, szemely]);
-            }
+    		for (let i = 0; i < sorok.length; i++) {
+        		let utcaNev = sorok[i].cells[0].textContent;
+        		let szemely = sorok[i].cells[1].querySelector("select").value;
+        		adatok.push([utcaNev, szemely]);
+    		}
 
-            gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SHEET_ID,
-                range: "Parositas!A:B",
-                valueInputOption: "RAW",
-                resource: { values: adatok }
-            }).then(response => {
-                alert("Mentés sikeres!");
-            }).catch(error => console.error("Hiba a mentéskor:", error));
-        }
+    		gapi.client.sheets.spreadsheets.values.append({
+        		spreadsheetId: SHEET_ID,
+        		range: "Parositas!A:B",
+        		valueInputOption: "RAW",
+        		resource: { values: adatok }
+    		}).then(response => {
+        	alert("Mentés sikeres!");
+    		}).catch(error => {
+        		console.error("Hiba a mentéskor:", error);
+        		alert("Hiba történt a mentés során. Nézd meg a konzolt!");
+    		});
+	}    
 
         function handleClientLoad() {
             gapi.load("client", loadData);
