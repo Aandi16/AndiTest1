@@ -97,7 +97,7 @@ function utcaExportFirestoreba(sorok) {
             await addDoc(utcaRef, {
                 nev: utcaNev
             });
-            console.log(`Hozzáadva: ${utcaNev} -> ${szemely}`);
+            console.log(`Hozzáadva: ${utcaNev}`);
         }
     });
 
