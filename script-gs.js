@@ -33,7 +33,7 @@ async function mentesFirestoreba1(utca, ember) {
 
 function mentesFirestoreba() {
     let tabla = document.getElementById("utcaTabla");
-    let sorok = tabla.getElementsByTagName("tr");
+    let sorok = Array.from(document.getElementById("utcaTabla").getElementsByTagName("tr"));
 
     sorok.forEach(async (sor) => {
         let utcaNev = sor.cells[0].textContent;
