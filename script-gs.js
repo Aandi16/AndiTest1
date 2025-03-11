@@ -39,11 +39,17 @@ async function betoltesFirestorebol() {
   });
 }
 
-// **Gombhoz kötött mentési példa**
+// **Gombhoz kötött mentés**
 document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("mentesGomb").addEventListener("click", function () {
-    const utca = document.getElementById("utcaInput").value;
-    const ember = document.getElementById("emberInput").value;
-    mentesFirestoreba(utca, ember);
-  });
+    document.getElementById("mentesGomb").addEventListener("click", function () {
+        let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+
+        for (let sor of sorok) {
+            let utcaNev = sor.cells[0].textContent;
+            let szemely = sor.cells[1].querySelector("select").value;
+            
+            // Firestore-ba mentés
+            mentesFirestoreba(utcaNev, szemely);
+        }
+    });
 });
