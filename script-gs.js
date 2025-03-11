@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
-// 🔥 Itt másold be a Firebase konfigurációdat 🔥
 const firebaseConfig = {
   apiKey: "AIzaSyBLWkY8PRtE3dbvamQ6EATULf4pAAAT6yI",
   authDomain: "andidb-61cf8.firebaseapp.com",
@@ -31,26 +30,37 @@ async function mentesFirestoreba1(utca, ember) {
   }
 }
 
-function mentesFirestoreba( sorok ) {   
+function mentesFirestoreba(sorok) {   
     console.log("Sorok típusa:", typeof sorok);
     console.log("Sorok értéke:", sorok);
-  
-    sorok.forEach(async (sor) => {
+
+    // HTMLCollection átalakítása tömbbé
+    let sorokArray = Array.from(sorok);
+
+    sorokArray.forEach(async (sor) => {
         let utcaNev = sor.cells[0].textContent;
         let szemely = sor.cells[1].querySelector("select").value;
-      
-        let utcaRef = db.collection("parositas").doc(utcaNev); // Dokumentum az utcanév alapján
-        let doc = await utcaRef.get();
+        
+        let utcaRef = collection(db, "parositas"); // Kollekció hivatkozás
+        let querySnapshot = await getDocs(utcaRef);
+        let docId = null;
 
-        if (doc.exists) {
-            // Ha már létezik az utca, frissítjük az adatokat
-            await utcaRef.update({
+        // Megnézzük, van-e már ilyen utca az adatbázisban
+        querySnapshot.forEach((doc) => {
+            if (doc.data().utca === utcaNev) {
+                docId = doc.id;
+            }
+        });
+
+        if (docId) {
+            // Ha létezik, frissítjük
+            await updateDoc(doc(db, "parositas", docId), {
                 szemely: szemely
             });
             console.log(`Frissítve: ${utcaNev} -> ${szemely}`);
         } else {
-            // Ha még nincs az adatbázisban, új dokumentumot hozunk létre
-            await utcaRef.set({
+            // Ha nincs, akkor hozzáadjuk
+            await addDoc(utcaRef, {
                 utca: utcaNev,
                 szemely: szemely
             });
