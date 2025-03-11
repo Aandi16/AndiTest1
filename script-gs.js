@@ -35,6 +35,9 @@ function mentesFirestoreba() {
     let tabla = document.getElementById("utcaTabla");
     let sorok = Array.from(document.getElementById("utcaTabla").getElementsByTagName("tr"));
 
+    console.log("Sorok típusa:", typeof sorok);
+    console.log("Sorok értéke:", sorok);
+  
     sorok.forEach(async (sor) => {
         let utcaNev = sor.cells[0].textContent;
         let szemely = sor.cells[1].querySelector("select").value;
