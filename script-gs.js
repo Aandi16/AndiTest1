@@ -31,7 +31,7 @@ async function mentesFirestoreba1(utca, ember) {
   }
 }
 
-function mentesFirestoreba() {   
+function mentesFirestoreba( sorok ) {   
     console.log("Sorok típusa:", typeof sorok);
     console.log("Sorok értéke:", sorok);
   
