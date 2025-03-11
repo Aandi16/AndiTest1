@@ -31,17 +31,14 @@ async function mentesFirestoreba1(utca, ember) {
   }
 }
 
-function mentesFirestoreba() {
-    let tabla = document.getElementById("utcaTabla");
-    let sorok = Array.from(document.getElementById("utcaTabla").getElementsByTagName("tr"));
-
+function mentesFirestoreba() {   
     console.log("Sorok típusa:", typeof sorok);
     console.log("Sorok értéke:", sorok);
   
     sorok.forEach(async (sor) => {
         let utcaNev = sor.cells[0].textContent;
         let szemely = sor.cells[1].querySelector("select").value;
-
+      
         let utcaRef = db.collection("parositas").doc(utcaNev); // Dokumentum az utcanév alapján
         let doc = await utcaRef.get();
 
@@ -75,14 +72,8 @@ async function betoltesFirestorebol() {
 // **Gombhoz kötött mentés**
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("mentesGomb").addEventListener("click", function () {
-        let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
-
-        for (let sor of sorok) {
-            let utcaNev = sor.cells[0].textContent;
-            let szemely = sor.cells[1].querySelector("select").value;
-            
-            // Firestore-ba mentés
-            mentesFirestoreba(utcaNev, szemely);
-        }
+        
+        mentesFirestoreba( document.getElementById("utcaTabla").getElementsByTagName("tr") );
+              
     });
 });
