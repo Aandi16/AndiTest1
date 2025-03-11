@@ -15,24 +15,70 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// **Mentés Firestore-ba**
-async function mentesFirestoreba1(utca, ember) {
-  try {
-    await addDoc(collection(db, "parositasok"), {
-      utca: utca,
-      ember: ember,
-      timestamp: new Date()
+// Adatok betöltése
+async function betoltAdatokat() {
+    const utcakQuery = await getDocs(collection(db, "Utcak"));
+    const emberekQuery = await getDocs(collection(db, "Emberek"));
+    const parositasQuery = await getDocs(collection(db, "Parositasok"));
+
+    let utcak = [];
+    let emberek = [];
+    let parositasok = {};
+
+    // Utcák beolvasása
+    utcakQuery.forEach((doc) => {
+        utcak.push(doc.data().nev); // Az "nev" mező tartalmazza az utca nevét
     });
-    alert("Sikeres mentés Firestore-ba!");
-  } catch (error) {
-    console.error("Hiba mentés közben:", error);
-    alert("Hiba történt mentés közben!");
-  }
+
+    // Emberek beolvasása
+    emberekQuery.forEach((doc) => {
+        emberek.push(doc.data().nev); // Az "nev" mező tartalmazza az ember nevét
+    });
+
+    // Párosítások betöltése (utca -> ember)
+    parositasQuery.forEach((doc) => {
+        parositasok[doc.data().utca] = doc.data().ember;
+    });
+
+    // Táblázat generálása
+    let tabla = document.getElementById("utcaTabla");
+    tabla.innerHTML = ""; // Töröljük a régi tartalmat
+
+    utcak.forEach((utca) => {
+        let sor = document.createElement("tr");
+        let utcaCell = document.createElement("td");
+        utcaCell.textContent = utca;
+
+        let emberCell = document.createElement("td");
+        let select = document.createElement("select");
+
+        // Legördülő lista feltöltése emberekkel
+        emberek.forEach((ember) => {
+            let option = document.createElement("option");
+            option.value = ember;
+            option.textContent = ember;
+            if (parositasok[utca] === ember) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        emberCell.appendChild(select);
+        sor.appendChild(utcaCell);
+        sor.appendChild(emberCell);
+        tabla.appendChild(sor);
+    });
 }
 
+// **Betöltés az oldal betöltésekor**
+document.addEventListener("DOMContentLoaded", function () {
+    betoltAdatokat();
+    document.getElementById("mentesGomb").addEventListener("click", mentesFirestoreba);
+});
+
 function mentesFirestoreba(sorok) {   
-    console.log("Sorok típusa:", typeof sorok);
-    console.log("Sorok értéke:", sorok);
+    // console.log("Sorok típusa:", typeof sorok);
+    // console.log("Sorok értéke:", sorok);
 
     // HTMLCollection átalakítása tömbbé
     let sorokArray = Array.from(sorok);
@@ -57,27 +103,25 @@ function mentesFirestoreba(sorok) {
             await updateDoc(doc(db, "parositas", docId), {
                 szemely: szemely
             });
-            console.log(`Frissítve: ${utcaNev} -> ${szemely}`);
+            // console.log(`Frissítve: ${utcaNev} -> ${szemely}`);
         } else {
             // Ha nincs, akkor hozzáadjuk
             await addDoc(utcaRef, {
                 utca: utcaNev,
                 szemely: szemely
             });
-            console.log(`Hozzáadva: ${utcaNev} -> ${szemely}`);
+            // console.log(`Hozzáadva: ${utcaNev} -> ${szemely}`);
         }
     });
 
     alert("Mentés sikeres!");
 }
 
-// **Adatok betöltése Firestore-ból**
-async function betoltesFirestorebol() {
-  const querySnapshot = await getDocs(collection(db, "parositasok"));
-  querySnapshot.forEach((doc) => {
-    console.log(doc.id, " => ", doc.data());
-  });
-}
+// **Betöltés az oldal betöltésekor**
+document.addEventListener("DOMContentLoaded", function () {
+    betoltAdatokat();
+    document.getElementById("mentesGomb").addEventListener("click", mentesFirestoreba);
+});
 
 // **Gombhoz kötött mentés**
 document.addEventListener("DOMContentLoaded", function () {
