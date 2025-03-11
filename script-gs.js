@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // **Mentés Firestore-ba**
-async function mentesFirestoreba(utca, ember) {
+async function mentesFirestoreba1(utca, ember) {
   try {
     await addDoc(collection(db, "parositasok"), {
       utca: utca,
@@ -29,6 +29,36 @@ async function mentesFirestoreba(utca, ember) {
     console.error("Hiba mentés közben:", error);
     alert("Hiba történt mentés közben!");
   }
+}
+
+function mentesFirestoreba() {
+    let tabla = document.getElementById("utcaTabla");
+    let sorok = tabla.getElementsByTagName("tr");
+
+    sorok.forEach(async (sor) => {
+        let utcaNev = sor.cells[0].textContent;
+        let szemely = sor.cells[1].querySelector("select").value;
+
+        let utcaRef = db.collection("parositas").doc(utcaNev); // Dokumentum az utcanév alapján
+        let doc = await utcaRef.get();
+
+        if (doc.exists) {
+            // Ha már létezik az utca, frissítjük az adatokat
+            await utcaRef.update({
+                szemely: szemely
+            });
+            console.log(`Frissítve: ${utcaNev} -> ${szemely}`);
+        } else {
+            // Ha még nincs az adatbázisban, új dokumentumot hozunk létre
+            await utcaRef.set({
+                utca: utcaNev,
+                szemely: szemely
+            });
+            console.log(`Hozzáadva: ${utcaNev} -> ${szemely}`);
+        }
+    });
+
+    alert("Mentés sikeres!");
 }
 
 // **Adatok betöltése Firestore-ból**
