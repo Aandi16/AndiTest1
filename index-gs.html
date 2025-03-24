@@ -126,7 +126,7 @@
                 cellaSzemely.appendChild(select);
 
                 // Lekérjük a házszámok számát és beírjuk a cellába
-                fetchHazszamokSzama(utca, cellaHazszam);
+                fetchHazszamokSzamaOverpass(utca, cellaHazszam);
             });
         }
 
@@ -143,6 +143,27 @@
                     cella.textContent = "Hiba";
                 });
         }
+
+	function fetchHazszamokSzamaOverpass(utca, cella) {
+	    // Overpass API lekérdezés
+	    let query = `
+		[out:json];
+		area[name="Üröm"]->.searchArea;
+		way["highway"="residential"]["name"="${utca}"](area.searchArea);
+		node(w)["addr:housenumber"];
+		out count;`;
+	
+	    fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
+		.then(response => response.json())
+		.then(data => {
+		    let hazszamSzam = data.elements.length; // Házszámok számának meghatározása
+		    cella.textContent = hazszamSzam > 0 ? hazszamSzam : "Nincs adat";
+		})
+		.catch(error => {
+		    console.error("Hiba történt a házszámok lekérése közben (Overpass):", error);
+		    cella.textContent = "Hiba";
+		});
+	}    
 
         function handleClientLoad() {
             gapi.load("client", loadData);
