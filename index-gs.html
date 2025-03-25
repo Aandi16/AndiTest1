@@ -49,7 +49,6 @@
                 <tr>
                     <th>Utca</th>
                     <th>Hozzárendelt személy</th>
-                    <th>Házszámok száma</th> <!-- Új oszlop a házszámok számának -->
                 </tr>
             </thead>
             <tbody id="utcaTabla"></tbody>
@@ -111,10 +110,9 @@
                 let sor = tabla.insertRow();
                 let cellaUtca = sor.insertCell(0);
                 let cellaSzemely = sor.insertCell(1);
-                let cellaHazszam = sor.insertCell(2);
 
                 cellaUtca.textContent = utca;
-                cellaUtca.onclick = () => jelolUtca(utca);
+                cellaUtca.onclick = () => jelolUtca3(utca);
 
                 let select = document.createElement("select");
                 emberek.forEach(ember => {
@@ -124,47 +122,136 @@
                     select.appendChild(option);
                 });
                 cellaSzemely.appendChild(select);
-
-                // Lekérjük a házszámok számát és beírjuk a cellába
-                fetchHazszamokSzamaOverpass(utca, cellaHazszam);
             });
-        }
+        }       
+	    
+	function jelolUtca(utcaNev) {
+	   // Eltávolítjuk a régi utcát, ha van
+	    if (activeLayer) {
+	        terkep.removeLayer(activeLayer);
+	    }
 
-        // Házszámok számának lekérése az Nominatim API-ból
-        function fetchHazszamokSzama(utca, cella) {
-            fetch(`https://nominatim.openstreetmap.org/search?street=${utca}&city=Üröm&postalcode=2096&country=Hungary&format=json`)
-                .then(response => response.json())
-                .then(data => {
-                    let hazszamSzam = data.length; // Házszámok számának meghatározása
-                    cella.textContent = hazszamSzam > 0 ? hazszamSzam : "Nincs adat";
-                })
-                .catch(error => {
-                    console.error("Hiba történt a házszámok lekérése közben:", error);
-                    cella.textContent = "Hiba";
+	     // Megkeressük az aktív sort és kiemeljük
+	    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+	    for (let sor of sorok) {
+	        if (sor.cells[0].textContent === utcaNev) {
+	            sor.classList.add("kijelolt-sor");
+	        } else {
+	            sor.classList.remove("kijelolt-sor");
+	        }
+	    }
+		
+	    // Lekérjük az új utca koordinátákat az OpenStreetMap-ből
+	    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
+	        .then(response => response.json())
+	        .then(data => {
+	            if (data.length > 0 && data[0].geojson) {
+	                // Új utca rajzolása geoJSON formátumban
+	                activeLayer = L.geoJSON(data[0].geojson, {
+	                    style: { color: 'blue', weight: 5 } // Beállíthatod a színt és a vonal vastagságát
+	                }).addTo(terkep);
+	                // A térképet a kijelölt utca körüli területre fókuszáljuk
+	                terkep.fitBounds(activeLayer.getBounds());
+	            } else {
+	                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+	            }
+	        }).catch(error => {
+	            console.error("Hiba történt:", error);
+	            alert("Hiba történt az utca adatainak lekérése közben!");
+	        });
+	}
+
+    function jelolUtca2(utcaNev) {
+    // Eltávolítjuk a régi utcát, ha van
+    if (activeLayer) {
+        terkep.removeLayer(activeLayer);
+    }
+
+    // Megkeressük az aktív sort és kiemeljük
+    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+    for (let sor of sorok) {
+        if (sor.cells[0].textContent === utcaNev) {
+            sor.classList.add("kijelolt-sor");
+        } else {
+            sor.classList.remove("kijelolt-sor");
+        }
+    }
+
+    // Lekérjük az összes találatot az utcára
+    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                let geoJsonFeatures = [];
+
+                // Végigmegyünk az összes találaton, hogy minden utcadarabot megkapjunk
+                data.forEach(utca => {
+                    if (utca.geojson) {
+                        geoJsonFeatures.push(L.geoJSON(utca.geojson, {
+                            style: { color: 'blue', weight: 5 }
+                        }));
+                    }
                 });
+
+                if (geoJsonFeatures.length > 0) {
+                    // Több rétegből álló csoportot hozunk létre
+                    activeLayer = L.layerGroup(geoJsonFeatures).addTo(terkep);
+                    terkep.fitBounds(activeLayer.getBounds());
+                } else {
+                    alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+                }
+            } else {
+                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+            }
+        }).catch(error => {
+            console.error("Hiba történt:", error);
+            alert("Hiba történt az utca adatainak lekérése közben!");
+        });
+	}
+
+    function jelolUtca3(utcaNev) {
+    // Eltávolítjuk a régi utcát, ha van
+    if (activeLayer) {
+        terkep.removeLayer(activeLayer);
+    }
+
+    // Megkeressük az aktív sort és kiemeljük
+    let sorok = document.getElementById("utcaTabla").getElementsByTagName("tr");
+    for (let sor of sorok) {
+        if (sor.cells[0].textContent === utcaNev) {
+            sor.classList.add("kijelolt-sor");
+        } else {
+            sor.classList.remove("kijelolt-sor");
         }
+    }
 
-	function fetchHazszamokSzamaOverpass(utca, cella) {
-	    // Overpass API lekérdezés
-	    let query = `
-		[out:json];
-		area[name="Üröm"]->.searchArea;
-		way["highway"="residential"]["name"="${utca}"](area.searchArea);
-		node(w)["addr:housenumber"];
-		out count;`;
-	
-	    fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`)
-		.then(response => response.json())
-		.then(data => {
-		    let hazszamSzam = data.elements.length; // Házszámok számának meghatározása
-		    cella.textContent = hazszamSzam > 0 ? hazszamSzam : "Nincs adat";
-		})
-		.catch(error => {
-		    console.error("Hiba történt a házszámok lekérése közben (Overpass):", error);
-		    cella.textContent = "Hiba";
-		});
-	}    
+    // Lekérjük az új utca koordinátákat az OpenStreetMap-ből
+    fetch(`https://nominatim.openstreetmap.org/search?street=${utcaNev}&city=Üröm&postalcode=2096&country=Hungary&format=json&polygon_geojson=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0 && data[0].geojson) {
+                activeLayer = L.geoJSON(data[0].geojson, {
+                    style: { color: 'blue', weight: 5 }
+                }).addTo(terkep);
 
+                // Ha az objektumnak van getBounds metódusa, akkor zoomolunk rá
+                if (activeLayer.getBounds && typeof activeLayer.getBounds === "function") {
+                    terkep.fitBounds(activeLayer.getBounds());
+                } else if (data[0].lat && data[0].lon) {
+                    // Ha csak egy pont adatunk van, akkor arra zoomolunk
+                    terkep.setView([data[0].lat, data[0].lon], 17);
+                }
+            } else {
+                alert("Nem található pontos egyezés erre az utcára: " + utcaNev);
+            }
+        })
+        .catch(error => {
+            console.error("Hiba történt:", error);
+            alert("Hiba történt az utca adatainak lekérése közben! Részletek a konzolban.");
+        });
+    }
+    
+    
         function handleClientLoad() {
             gapi.load("client", loadData);
         }
